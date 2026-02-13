@@ -172,8 +172,8 @@
       
       <div class="card">
         <div class="tabs">
-          <button class="tab active" onclick="showLogin()">Login</button>
-          <button class="tab" onclick="showRegister()">Register</button>
+          <button class="tab active" onclick="showLogin(event)">Login</button>
+          <button class="tab" onclick="showRegister(event)">Register</button>
         </div>
         
         <div id="errorMsg" class="error-msg hidden"></div>
@@ -282,16 +282,18 @@
     }
     
     // Auth functions
-    function showLogin() {
+    function showLogin(e) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+      if (e && e.target) e.target.classList.add('active');
+      else document.querySelectorAll('.tab')[0].classList.add('active');
       document.getElementById('loginForm').classList.remove('hidden');
       document.getElementById('registerForm').classList.add('hidden');
     }
     
-    function showRegister() {
+    function showRegister(e) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+      if (e && e.target) e.target.classList.add('active');
+      else document.querySelectorAll('.tab')[1].classList.add('active');
       document.getElementById('loginForm').classList.add('hidden');
       document.getElementById('registerForm').classList.remove('hidden');
     }
