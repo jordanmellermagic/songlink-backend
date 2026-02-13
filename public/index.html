@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SongLink - Music Prediction</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #0a0a0f;
+      --card: #1a1a2e;
+      --border: #2a2a3e;
+      --text: #ffffff;
+      --text-dim: #a0a0b8;
+      --accent: #6366f1;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .subtitle { color: var(--text-dim); margin-bottom: 2rem; }
+    
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .form-group { margin-bottom: 1.5rem; }
+    
+    label {
+      display: block;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: transform 0.2s;
+    }
+    
+    .btn:hover { transform: translateY(-2px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .btn-secondary {
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    
+    .link-box {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      word-break: break-all;
+      margin-top: 0.5rem;
+    }
+    
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    
+    .status.connected {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+    
+    .status.disconnected {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--error);
+    }
+    
+    .hidden { display: none; }
+    
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    
+    .success-msg {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .tab {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Auth Screen -->
+    <div id="authScreen">
+      <h1>🎵 SongLink</h1>
+      <p class="subtitle">Music Prediction for Performers</p>
+      
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="showLogin()">Login</button>
+          <button class="tab" onclick="showRegister()">Register</button>
+        </div>
+        
+        <div id="errorMsg" class="error-msg hidden"></div>
+        
+        <!-- Login Form -->
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" required>
+          </div>
+          <button type="submit" class="btn">Login</button>
+        </form>
+        
+        <!-- Register Form -->
+        <form id="registerForm" class="hidden">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="regEmail" required>
+          </div>
+          <div class="form-group">
+            <label>Username (alphanumeric only)</label>
+            <input type="text" id="regUsername" pattern="[a-zA-Z0-9]+" required>
+            <small style="color: var(--text-dim);">This will be your spectator link</small>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="regPassword" required>
+          </div>
+          <button type="submit" class="btn">Register</button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Dashboard -->
+    <div id="dashboardScreen" class="hidden">
+      <h1>🎵 SongLink</h1>
+      <p class="subtitle">Welcome, <span id="usernameDisplay"></span></p>
+      
+      <div class="card">
+        <h2 style="margin-bottom: 1rem;">Your Spectator Link</h2>
+        <div class="link-box" id="spectatorLink"></div>
+        <p style="color: var(--text-dim); margin-top: 0.5rem; font-size: 0.875rem;">
+          Type this in Safari on the spectator's phone
+        </p>
+      </div>
+      
+      <div class="card">
+        <h2 style="margin-bottom: 1rem;">Connection Status</h2>
+        <div id="connectionStatus" class="status disconnected">
+          <span>●</span>
+          <span>Not Connected</span>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2 style="margin-bottom: 1rem;">Send Song</h2>
+        
+        <div id="sendSuccess" class="success-msg hidden"></div>
+        <div id="sendError" class="error-msg hidden"></div>
+        
+        <form id="sendForm">
+          <div class="form-group">
+            <label>Song Name (e.g., "Magic by B.o.B" or just "Magic")</label>
+            <input type="text" id="songQuery" placeholder="Enter song name..." required>
+          </div>
+          <div class="form-group">
+            <label>Service (spectator must select this first)</label>
+            <select id="serviceSelect" required>
+              <option value="">Select service...</option>
+              <option value="spotify">Spotify</option>
+              <option value="apple">Apple Music</option>
+              <option value="youtube">YouTube</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">Send to Phone</button>
+        </form>
+      </div>
+      
+      <div class="card">
+        <h2 style="margin-bottom: 1rem;">Settings</h2>
+        
+        <div class="form-group">
+          <label>Default Start Time (seconds)</label>
+          <input type="number" id="timestampSetting" min="0" max="300" value="45">
+          <small style="color: var(--text-dim);">Song will start playing this many seconds in</small>
+        </div>
+        
+        <button class="btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+      
+      <button class="btn btn-secondary" onclick="logout()" style="margin-top: 1rem;">Logout</button>
+    </div>
+  </div>
+  
+  <script>
+    let token = localStorage.getItem('token');
+    let currentUser = null;
+    
+    // Initialize
+    if (token) {
+      loadDashboard();
+    }
+    
+    // Auth functions
+    function showLogin() {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+    }
+    
+    function showRegister() {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.remove('hidden');
+    }
+    
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          token = data.token;
+          localStorage.setItem('token', token);
+          loadDashboard();
+        } else {
+          showError(data.error);
+        }
+      } catch (error) {
+        showError('Login failed');
+      }
+    });
+    
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value;
+      const username = document.getElementById('regUsername').value;
+      const password = document.getElementById('regPassword').value;
+      
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, username, password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          token = data.token;
+          localStorage.setItem('token', token);
+          loadDashboard();
+        } else {
+          showError(data.error);
+        }
+      } catch (error) {
+        showError('Registration failed');
+      }
+    });
+    
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/user', {
+          headers: { 'Authorization': \`Bearer \${token}\` }
+        });
+        
+        if (!res.ok) throw new Error('Auth failed');
+        
+        const data = await res.json();
+        currentUser = data;
+        
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('dashboardScreen').classList.remove('hidden');
+        document.getElementById('usernameDisplay').textContent = data.username;
+        document.getElementById('spectatorLink').textContent = data.spectatorUrl;
+        document.getElementById('timestampSetting').value = data.default_timestamp;
+        
+        // Start checking connection status
+        checkStatus();
+        setInterval(checkStatus, 3000);
+      } catch (error) {
+        logout();
+      }
+    }
+    
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/status', {
+          headers: { 'Authorization': \`Bearer \${token}\` }
+        });
+        
+        const data = await res.json();
+        const statusEl = document.getElementById('connectionStatus');
+        
+        if (data.connected) {
+          statusEl.className = 'status connected';
+          statusEl.innerHTML = '<span>●</span><span>Connected</span>';
+        } else {
+          statusEl.className = 'status disconnected';
+          statusEl.innerHTML = '<span>●</span><span>Waiting for Connection</span>';
+        }
+      } catch (error) {
+        console.error('Status check failed:', error);
+      }
+    }
+    
+    document.getElementById('sendForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const songQuery = document.getElementById('songQuery').value;
+      const service = document.getElementById('serviceSelect').value;
+      
+      document.getElementById('sendSuccess').classList.add('hidden');
+      document.getElementById('sendError').classList.add('hidden');
+      
+      try {
+        const res = await fetch('/api/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': \`Bearer \${token}\`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ songQuery, service })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          const msg = document.getElementById('sendSuccess');
+          msg.textContent = \`✅ Sent: "\${data.track.name}" by \${data.track.artist}\`;
+          msg.classList.remove('hidden');
+          document.getElementById('songQuery').value = '';
+        } else {
+          const msg = document.getElementById('sendError');
+          msg.textContent = data.error;
+          msg.classList.remove('hidden');
+        }
+      } catch (error) {
+        const msg = document.getElementById('sendError');
+        msg.textContent = 'Failed to send song';
+        msg.classList.remove('hidden');
+      }
+    });
+    
+    async function saveSettings() {
+      const defaultTimestamp = parseInt(document.getElementById('timestampSetting').value);
+      
+      try {
+        await fetch('/api/user/settings', {
+          method: 'PUT',
+          headers: {
+            'Authorization': \`Bearer \${token}\`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ defaultTimestamp })
+        });
+        
+        alert('Settings saved!');
+      } catch (error) {
+        alert('Failed to save settings');
+      }
+    }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      token = null;
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('dashboardScreen').classList.add('hidden');
+    }
+    
+    function showError(msg) {
+      const errorEl = document.getElementById('errorMsg');
+      errorEl.textContent = msg;
+      errorEl.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
