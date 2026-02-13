@@ -40,6 +40,7 @@ const SPECTATOR_URL = process.env.SPECTATOR_URL || 'http://localhost:3001';
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // Store active WebSocket connections
 const connections = new Map(); // sessionId -> ws
@@ -347,6 +348,11 @@ app.post('/api/spectator/:username/service', (req, res) => {
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Serve frontend
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 const PORT = process.env.PORT || 3000;
